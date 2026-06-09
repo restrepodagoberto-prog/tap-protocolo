@@ -3,84 +3,189 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TAP_Protocolo — Observador Híbrido</title>
+<title>TAP_Protocolo</title>
 <style>
-  :root {
-    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #efefec;
-    --text: #1a1a18; --text2: #6b6b67; --text3: #9b9b96;
-    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
-    --radius: 8px; --radius-lg: 12px;
-    --teal50: #E1F5EE; --teal800: #085041; --teal600: #0F6E56;
-    --purple50: #EEEDFE; --purple800: #3C3489;
-    --amber50: #FAEEDA; --amber800: #633806;
-    --blue50: #E6F1FB; --blue800: #0C447C; --blue600: #185FA5;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
-  .container { max-width: 780px; margin: 0 auto; padding: 2rem 1.5rem; }
-  .header { margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 0.5px solid var(--border); }
-  .header-label { font-size: 11px; letter-spacing: .12em; color: var(--text3); text-transform: uppercase; margin-bottom: 6px; }
-  .header-title { font-size: 26px; font-weight: 500; }
-  .header-sub { font-size: 14px; color: var(--text2); margin-top: 4px; }
-  .contract-pill { display: inline-flex; align-items: center; gap: 6px; background: var(--bg2); border: 0.5px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 11px; font-family: monospace; color: var(--text3); margin-top: 10px; }
-  .status-bar { border-radius: var(--radius); padding: 10px 16px; font-size: 13px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; }
-  .s-disconnected { background: var(--bg2); color: var(--text2); border: 0.5px solid var(--border); }
-  .s-connected { background: var(--teal50); color: var(--teal800); border: 0.5px solid var(--teal600); }
-  .s-pending { background: var(--amber50); color: var(--amber800); }
-  .s-error { background: #FCEBEB; color: #791F1F; }
-  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
-  .metric { background: var(--bg2); border-radius: var(--radius); padding: 1rem; }
-  .metric-label { font-size: 12px; color: var(--text3); margin-bottom: 6px; }
-  .metric-value { font-size: 22px; font-weight: 500; }
-  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
-  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.5rem; }
-  .section-label { font-size: 11px; letter-spacing: .1em; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; }
-  .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  label { font-size: 12px; color: var(--text2); }
-  input, textarea, select { font-family: inherit; font-size: 14px; width: 100%; background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 8px 12px; color: var(--text); outline: none; }
-  textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
-  .btn { border-radius: var(--radius); padding: 10px 18px; font-size: 14px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; border: none; }
-  .btn-dark { background: var(--text); color: var(--bg); width: 100%; justify-content: center; }
-  .btn-dark:disabled { opacity: .4; cursor: not-allowed; }
-  .btn-outline { background: transparent; border: 0.5px solid var(--border2); color: var(--text2); }
-  .btn-outline:disabled { opacity: .4; cursor: not-allowed; }
-  .btn-connect { width: 100%; justify-content: center; margin-bottom: 1.5rem; }
-  .log-list { display: flex; flex-direction: column; gap: 10px; }
-  .log-entry { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
-  .log-entry-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; gap: 6px; }
-  .log-ts { font-size: 11px; color: var(--text3); font-family: monospace; }
-  .badges { display: flex; gap: 6px; }
-  .badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; }
-  .badge-chain { background: var(--teal50); color: var(--teal800); }
-  .badge-local { background: var(--purple50); color: var(--purple800); }
-  .badge-macro { background: var(--amber50); color: var(--amber800); }
-  .badge-blue { background: var(--blue50); color: var(--blue800); }
-  .log-obs { font-size: 14px; font-weight: 500; line-height: 1.5; margin-bottom: 6px; }
-  .log-field { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.5; }
-  .log-field span { color: var(--text3); }
-  .log-valor { font-size: 12px; color: var(--teal600); background: var(--teal50); border-radius: var(--radius); padding: 6px 10px; margin-top: 8px; line-height: 1.5; }
-  .log-hash { font-size: 11px; font-family: monospace; color: var(--text3); margin-top: 6px; word-break: break-all; }
-  .log-hash a { color: var(--blue600); text-decoration: none; }
-  .hito-card { background: var(--bg2); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 8px; }
-  .hito-obs { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
-  .hito-valor { font-size: 12px; color: var(--teal600); background: var(--teal50); border-radius: var(--radius); padding: 5px 10px; margin-top: 6px; }
-  .hito-meta { font-size: 11px; color: var(--text3); margin-top: 6px; }
-  .empty { text-align: center; padding: 2rem; color: var(--text3); font-size: 14px; }
-  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border2); border-top-color: var(--text); border-radius: 50%; animation: spin .6s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f0ec;color:#1a1a18;min-height:100vh}
+.wrap{max-width:760px;margin:0 auto;padding:2rem 1.5rem}
+h1{font-size:24px;font-weight:500;margin-bottom:4px}
+.sub{font-size:14px;color:#6b6b67;margin-bottom:6px}
+.pill{display:inline-block;background:#e8e8e4;border-radius:20px;padding:4px 12px;font-size:11px;font-family:monospace;color:#9b9b96;margin-bottom:1.5rem}
+.label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#9b9b96;margin-bottom:4px}
+.sbar{border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:1.5rem;display:flex;align-items:center;gap:8px}
+.sd{background:#e8e8e4;color:#6b6b67}
+.sc{background:#d4f0e6;color:#085041}
+.sp{background:#faeeda;color:#633806}
+.se{background:#fce8e8;color:#7a1f1f}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.5rem}
+.box{background:#fff;border-radius:8px;padding:1rem}
+.bval{font-size:22px;font-weight:500}
+.bsub{font-size:11px;color:#9b9b96;margin-top:3px}
+.card{background:#fff;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{font-size:12px;color:#6b6b67}
+input,textarea,select{font-family:inherit;font-size:14px;width:100%;background:#f5f5f3;border:1px solid rgba(0,0,0,0.15);border-radius:8px;padding:8px 12px;color:#1a1a18;outline:none}
+textarea{resize:vertical;min-height:70px;line-height:1.5}
+.btn{border-radius:8px;padding:10px 18px;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;transition:opacity .15s}
+.bd{background:#1a1a18;color:#fff;width:100%}
+.bd:disabled{opacity:.4;cursor:not-allowed}
+.bo{background:transparent;border:1px solid rgba(0,0,0,0.2);color:#6b6b67}
+.bo:disabled{opacity:.4}
+.bcn{width:100%;margin-bottom:1.5rem}
+.hr{border:none;border-top:1px solid rgba(0,0,0,0.08);margin:1.5rem 0}
+.logs{display:flex;flex-direction:column;gap:10px}
+.entry{background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:1rem 1.25rem}
+.eh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:6px}
+.ets{font-size:11px;color:#9b9b96;font-family:monospace}
+.bgs{display:flex;gap:6px;flex-wrap:wrap}
+.bg{font-size:11px;padding:2px 8px;border-radius:20px}
+.bg-c{background:#d4f0e6;color:#085041}
+.bg-l{background:#eeedfe;color:#3c3489}
+.bg-m{background:#faeeda;color:#633806}
+.bg-b{background:#e6f1fb;color:#0c447c}
+.eobs{font-size:14px;font-weight:500;line-height:1.5;margin-bottom:6px}
+.efi{font-size:12px;color:#6b6b67;margin-top:3px;line-height:1.5}
+.efi span{color:#9b9b96}
+.eval{font-size:12px;color:#0f6e56;background:#d4f0e6;border-radius:8px;padding:6px 10px;margin-top:8px;line-height:1.5}
+.ehash{font-size:11px;font-family:monospace;color:#9b9b96;margin-top:6px;word-break:break-all}
+.ehash a{color:#185fa5;text-decoration:none}
+.hcard{background:#f5f5f3;border-radius:8px;padding:12px 16px;margin-bottom:8px}
+.hobs{font-size:13px;font-weight:500;margin-bottom:4px}
+.hval{font-size:12px;color:#0f6e56;background:#d4f0e6;border-radius:8px;padding:5px 10px;margin-top:6px}
+.hmeta{font-size:11px;color:#9b9b96;margin-top:6px}
+.empty{text-align:center;padding:2rem;color:#9b9b96;font-size:14px}
+.tbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,0.15);border-top-color:#1a1a18;border-radius:50%;animation:sp .6s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(max-width:500px){.fr{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <div class="header-label">Observador Híbrido Activo</div>
-    <div class="header-title">TAP_Protocolo</div>
-    <div class="header-sub">Dashboard de Resonancia — Sepolia Testnet</div>
-    <div class="contract-pill">⬡ 0xa4C2F6c5Aa55585655e60E34573CfC594B841e8F</div>
+<div class="wrap">
+  <div style="padding-bottom:1.5rem;border-bottom:1px solid rgba(0,0,0,0.08);margin-bottom:1.5rem">
+    <div class="label">Observador Híbrido Activo</div>
+    <h1>TAP_Protocolo</h1>
+    <div class="sub">Dashboard de Resonancia — Sepolia Testnet</div>
+    <div class="pill">0xa4C2F6c5Aa55585655e60E34573CfC594B841e8F</div>
   </div>
-  <div id="status-bar" class="status-bar s-disconnected">
-    <span id="status-icon">○</span>
-
+  <div id="sbar" class="sbar sd"><span id="sicon">○</span><span id="stxt">MetaMask no conectado — haz clic en Conectar</span></div>
+  <div class="grid">
+    <div class="box"><div class="label">Cuenta</div><div class="bval" id="macc" style="font-size:13px;font-family:monospace">—</div></div>
+    <div class="box"><div class="label">Hitos on-chain</div><div class="bval" id="mhit">—</div><div class="bsub">en Sepolia</div></div>
+    <div class="box"><div class="label">Entradas locales</div><div class="bval" id="mloc">0</div><div class="bsub">esta sesión</div></div>
+    <div class="box"><div class="label">Saldo</div><div class="bval" id="mbal">—</div><div class="bsub">SepoliaETH</div></div>
+  </div>
+  <button class="btn bo bcn" id="btncon" onclick="conectar()">⬡ Conectar MetaMask a Sepolia</button>
+  <div class="card">
+    <div class="label" style="margin-bottom:12px">Nueva entrada TAP</div>
+    <div class="fg"><label>Observación</label><textarea id="iobs" placeholder="¿Qué estás observando ahora?"></textarea></div>
+    <div class="fr">
+      <div class="fg"><label>Hueco detectado</label><textarea id="ihue" placeholder="¿Cuál es la fricción?" style="min-height:55px"></textarea></div>
+      <div class="fg"><label>Acción / Resonancia</label><textarea id="iac" placeholder="¿Cómo transmutaste?" style="min-height:55px"></textarea></div>
+    </div>
+    <div class="fg"><label>Valor extraído <span style="color:#9b9b96">(específico)</span></label><input id="ival" type="text" placeholder="¿Qué resultado concreto generó esto?"></div>
+    <div class="fr">
+      <div class="fg"><label>Categoría</label><select id="icat"><option value="t">Técnico / Blockchain</option><option value="m">Macroeconómico</option><option value="p">Personal / Cognitivo</option><option value="tp">Protocolo TAP</option></select></div>
+      <div class="fg"><label>¿Registrar on-chain?</label><select id="ioc"><option value="n">No — solo local</option><option value="s">Sí — grabar en Sepolia</option></select></div>
+    </div>
+    <button class="btn bd" id="btnreg" onclick="registrar()">+ Registrar en el toroide</button>
+  </div>
+  <div class="card">
+    <div class="tbar"><div class="label" style="margin-bottom:0">Flujo local</div><button class="btn bo" style="padding:6px 14px;font-size:12px" onclick="exportar()">↓ Exportar .md</button></div>
+    <div class="logs" id="loglist"><div class="empty">El toroide aguarda tu primera observación.</div></div>
+  </div>
+  <div class="card">
+    <div class="tbar"><div class="label" style="margin-bottom:0">Hitos on-chain — Sepolia</div><button class="btn bo" id="btnleer" style="padding:6px 14px;font-size:12px" onclick="leerHitos()" disabled>↺ Actualizar</button></div>
+    <div id="chitos"><div class="empty">Conecta MetaMask para ver los hitos en Sepolia.</div></div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+<script>
+const CA='0xa4C2F6c5Aa55585655e60E34573CfC594B841e8F';
+const ABI=['function registrarHito(string calldata observacion,string calldata valorExtraido) external','function totalHitos() external view returns (uint256)','function hitos(uint256) external view returns (string observacion,string valorExtraido,uint256 timestamp)'];
+let provider,signer,contract,entries=[];
+function ss(t,x){document.getElementById('sbar').className='sbar s'+t;document.getElementById('sicon').textContent=t==='c'?'●':t==='p'?'◌':t==='e'?'✕':'○';document.getElementById('stxt').textContent=x;}
+async function conectar(){
+  if(!window.ethereum){ss('e','MetaMask no detectado en Chrome.');return;}
+  try{
+    ss('p','Esperando autorización en MetaMask...');
+    provider=new ethers.BrowserProvider(window.ethereum);
+    await provider.send('eth_requestAccounts',[]);
+    const net=await provider.getNetwork();
+    if(net.chainId!==11155111n){ss('e','Cambia a Sepolia en MetaMask y vuelve a conectar.');return;}
+    signer=await provider.getSigner();
+    contract=new ethers.Contract(CA,ABI,signer);
+    const addr=await signer.getAddress();
+    const bal=await provider.getBalance(addr);
+    document.getElementById('macc').textContent=addr.slice(0,6)+'...'+addr.slice(-4);
+    document.getElementById('mbal').textContent=parseFloat(ethers.formatEther(bal)).toFixed(4);
+    ss('c','Conectado a Sepolia — '+addr.slice(0,6)+'...'+addr.slice(-4));
+    const b=document.getElementById('btncon');b.textContent='● Conectado';b.disabled=true;
+    document.getElementById('btnleer').disabled=false;
+    await leerHitos();
+  }catch(e){ss('e','Error: '+(e.message||'Rechazado'));}
+}
+async function leerHitos(){
+  if(!contract)return;
+  try{
+    document.getElementById('btnleer').innerHTML='<span class="spin"></span>';
+    const tot=await contract.totalHitos();
+    document.getElementById('mhit').textContent=tot.toString();
+    const c=document.getElementById('chitos');
+    if(tot===0n){c.innerHTML='<div class="empty">Aún no hay hitos on-chain.</div>';document.getElementById('btnleer').textContent='↺ Actualizar';return;}
+    let h='';
+    for(let i=Number(tot)-1;i>=0;i--){
+      const hi=await contract.hitos(i);
+      const f=new Date(Number(hi.timestamp)*1000).toLocaleString('es-CO');
+      h+=`<div class="hcard"><div class="hobs">${hi.observacion}</div><div class="hval">${hi.valorExtraido}</div><div class="hmeta">⬡ ${f}</div></div>`;
+    }
+    c.innerHTML=h;document.getElementById('btnleer').textContent='↺ Actualizar';
+  }catch(e){document.getElementById('chitos').innerHTML='<div class="empty">Error: '+e.message+'</div>';document.getElementById('btnleer').textContent='↺ Actualizar';}
+}
+async function registrar(){
+  const obs=document.getElementById('iobs').value.trim();
+  const hue=document.getElementById('ihue').value.trim();
+  const ac=document.getElementById('iac').value.trim();
+  const val=document.getElementById('ival').value.trim()||'Aprendizaje integrado al toroide.';
+  const cat=document.getElementById('icat').value;
+  const oc=document.getElementById('ioc').value==='s';
+  if(!obs){document.getElementById('iobs').focus();return;}
+  const btn=document.getElementById('btnreg');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Procesando...';
+  if(oc){
+    if(!contract){ss('e','Conecta MetaMask primero.');btn.disabled=false;btn.textContent='+ Registrar en el toroide';return;}
+    try{
+      ss('p','Esperando confirmación en MetaMask...');
+      const tx=await contract.registrarHito(obs,val);
+      ss('p','Confirmando en Sepolia...');
+      const rc=await tx.wait();
+      guardar(obs,hue,ac,val,cat,rc.hash);
+      ss('c','Hito grabado on-chain ✓');
+      await leerHitos();
+    }catch(e){ss('e','Error: '+(e.reason||e.message||'Rechazado'));btn.disabled=false;btn.textContent='+ Registrar en el toroide';return;}
+  }else{guardar(obs,hue,ac,val,cat,null);}
+  ['iobs','ihue','iac','ival'].forEach(id=>document.getElementById(id).value='');
+  btn.disabled=false;btn.textContent='+ Registrar en el toroide';
+}
+function guardar(obs,hue,ac,val,cat,hash){
+  entries.unshift({ts:new Date().toLocaleString('es-CO'),obs,hue,ac,val,cat,hash});
+  document.getElementById('mloc').textContent=entries.length;
+  renderLog();
+}
+const CL={t:'Técnico',m:'Macroeconómico',p:'Personal',tp:'Protocolo TAP'};
+const CB={t:'bg-b',m:'bg-m',p:'bg-l',tp:'bg-c'};
+function renderLog(){
+  const l=document.getElementById('loglist');
+  if(!entries.length){l.innerHTML='<div class="empty">El toroide aguarda tu primera observación.</div>';return;}
+  l.innerHTML=entries.map(e=>`<div class="entry"><div class="eh"><span class="ets">${e.ts}</span><div class="bgs"><span class="bg ${CB[e.cat]||'bg-l'}">${CL[e.cat]||e.cat}</span>${e.hash?'<span class="bg bg-c">⬡ on-chain</span>':'<span class="bg bg-l">local</span>'}</div></div><div class="eobs">${e.obs}</div>${e.hue?`<div class="efi"><span>Hueco → </span>${e.hue}</div>`:''}${e.ac?`<div class="efi"><span>Resonancia → </span>${e.ac}</div>`:''}<div class="eval">${e.val}</div>${e.hash?`<div class="ehash">⬡ tx: <a href="https://sepolia.etherscan.io/tx/${e.hash}" target="_blank">${e.hash.slice(0,22)}...</a></div>`:''}</div>`).join('');
+}
+function exportar(){
+  if(!entries.length)return;
+  let md=`# TAP_Flujo_Log\nExportado: ${new Date().toLocaleString('es-CO')}\nContrato: ${CA}\n\n`;
+  entries.slice().reverse().forEach(e=>{md+=`[${e.ts}] **Observación**: ${e.obs}\n`;if(e.hue)md+=`- **Hueco**: ${e.hue}\n`;if(e.ac)md+=`- **Acción/Resonancia**: ${e.ac}\n`;md+=`- **Valor Extraído**: ${e.val}\n- **Categoría**: ${CL[e.cat]||e.cat}\n`;if(e.hash)md+=`- **Tx Sepolia**: https://sepolia.etherscan.io/tx/${e.hash}\n`;md+=`---\n`;});
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));a.download='TAP_Flujo_Log_'+new Date().toISOString().slice(0,10)+'.md';a.click();
+}
+</script>
+</body>
+</html>
